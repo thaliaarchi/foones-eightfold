@@ -136,7 +136,7 @@ checkProgramInEnv env (Assume x typ:prog) = do
     checkNotInEnv x env
     if betaEqual typ star
      then return star
-     else typecheck env typ star
+     else typeinfer env typ
     checkProgramInEnv (extendEnv x typ env) prog
 checkProgramInEnv env (Prove x typ term:prog) = do
     checkNotInEnv x env
