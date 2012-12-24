@@ -7,11 +7,18 @@ import System(getArgs)
 import Lang
 import Parser
 
+showResponse :: ProgramResponse -> IO ()
+showResponse []     = putStr "done.\n"
+showResponse (r:rs) = do
+    putStr $ show r
+    putStr "\n"
+    showResponse rs
+
 checkString :: String -> IO ()
 checkString x = do
     case checkProgram =<< parse x of
-      OK prog   -> putStr "done.\n"
-      Error msg -> putStr ("Error:\n" ++ msg ++ "\n")
+      OK response -> showResponse response
+      Error msg   -> putStr ("Error:\n" ++ msg ++ "\n")
 
 checkFile :: String -> IO ()
 checkFile filename = do

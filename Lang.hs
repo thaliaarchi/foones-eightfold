@@ -1,4 +1,4 @@
-module Lang(Id, Term(..), Program, Statement(..), M(..), checkProgram) where
+module Lang(Id, Term(..), Program, Statement(..), M(..), ProgramResponse, Response(..), checkProgram) where
 
 import Maybe
 import List
@@ -12,9 +12,16 @@ data Term = Var Id
           deriving Show
 
 type Program = [Statement]
+type ProgramResponse = [Response]
+
+data Response = AnswerType Term Term
+              | AnswerValue Term Term
+              deriving Show
 
 data Statement = Assume Id Term
                | Prove Id Term Term
+               | AskType Term
+               | AskValue Term
                deriving Show
 
 type Env = [(Id, Term)]
@@ -130,20 +137,26 @@ checkNotInEnv :: Id -> Env -> M ()
 checkNotInEnv x env = maybe (return ()) (const f) $ lookup x env
   where f = fail ("identifier " ++ x ++ " defined twice in environment")
 
-checkProgramInEnv :: Env -> Program -> M ()
-checkProgramInEnv env [] = OK ()
+checkProgramInEnv :: Env -> Program -> M ProgramResponse
+checkProgramInEnv env [] = OK []
 checkProgramInEnv env (Assume x typ:prog) = do
     checkNotInEnv x env
-    if betaEqual typ star
-     then return star
-     else typeinfer env typ
+    typeinfer env typ
     checkProgramInEnv (extendEnv x typ env) prog
 checkProgramInEnv env (Prove x typ term:prog) = do
     checkNotInEnv x env
     typecheck env typ star
     typecheck env term typ
     checkProgramInEnv (extendEnv x typ env) prog
+checkProgramInEnv env (AskType term:prog) = do
+    typ <- typeinfer env term
+    res <- checkProgramInEnv env prog
+    return (AnswerType term typ : res)
+checkProgramInEnv env (AskValue term:prog) = do
+    typ <- typeinfer env term
+    res <- checkProgramInEnv env prog
+    return (AnswerValue term (reduce term) : res)
 
-checkProgram :: Program -> M ()
-checkProgram = checkProgramInEnv emptyEnv
+checkProgram :: Program -> M ProgramResponse
+checkProgram = checkProgramInEnv (extendEnv "*" star emptyEnv)
 

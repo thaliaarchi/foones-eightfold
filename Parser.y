@@ -13,6 +13,8 @@ data Token = TokenColon
            | TokenDot
            | TokenComma
            | TokenProof
+           | TokenAskType
+           | TokenAskValue
            deriving (Show)
 
 }
@@ -31,13 +33,17 @@ data Token = TokenColon
     comma    { TokenComma }
     dot      { TokenDot }
     proof    { TokenProof }
+    askType  { TokenAskType }
+    askValue { TokenAskValue }
 
 %%
 
 Program
     : {- empty -}                           { [] }
-    | id colon Exp dot Program              { (Assume $1 $3):$5 }
-    | id colon Exp proof Exp dot Program    { (Prove $1 $3 $5):$7 }
+    | id colon Exp dot Program              { Assume $1 $3 : $5 }
+    | id colon Exp proof Exp dot Program    { Prove $1 $3 $5 : $7 }
+    | askType Exp dot Program               { AskType $2 : $4 }
+    | askValue Exp dot Program              { AskValue $2 : $4 }
 
 Exp
     : colon VarTypeList dot Exp       { foldr (uncurry Lam) $4 $2 }
@@ -89,6 +95,8 @@ tokenize (',':xs)           = TokenComma : tokenize xs
 tokenize ('(':xs)           = TokenLParen : tokenize xs
 tokenize (')':xs)           = TokenRParen : tokenize xs
 tokenize ('>':xs)           = TokenFun : tokenize xs
+tokenize ('?':xs)           = TokenAskType : tokenize xs
+tokenize ('!':xs)           = TokenAskValue : tokenize xs
 tokenize [] = []
 
 parse :: String -> M Program
