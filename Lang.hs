@@ -114,9 +114,12 @@ typeinfer env (App a b) = do
                 Error msg -> fail ("in application " ++ show (App a b) ++ " -- argument has wrong type\n" ++ msg)
         _ -> fail ("in application " ++ show (App a b) ++ " -- function is not an abstraction, its type is " ++ show a' ++ "\n")
 typeinfer env (Lam x s a) = do
-    t <- typeinfer env s
+    typeinfer env s
     b <- typeinfer (extendEnv x s env) a
-    return $ Lam x t b
+    return $ Lam x s b
+    --t <- typeinfer env s
+    --b <- typeinfer (extendEnv x s env) a
+    --return $ Lam x t b
 
 {-
 validEnv :: Env -> M [Term]
@@ -153,7 +156,7 @@ checkProgramInEnv env (AskType term:prog) = do
     res <- checkProgramInEnv env prog
     return (AnswerType term typ : res)
 checkProgramInEnv env (AskValue term:prog) = do
-    typ <- typeinfer env term
+    typeinfer env term
     res <- checkProgramInEnv env prog
     return (AnswerValue term (reduce term) : res)
 
