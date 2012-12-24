@@ -90,7 +90,7 @@ star :: Term
 star = Var "*"
 
 typecheck :: Env -> Term -> Term -> M Term
-typecheck env inferTerm   typ = do
+typecheck env inferTerm typ = do
     typ' <- typeinfer env inferTerm
     if betaEqual typ typ'
      then return typ
@@ -111,8 +111,7 @@ typeinfer env (Lam x s a) = do
     b <- typeinfer (extendEnv x s env) a
     return $ Lam x t b
 
-----
-
+{-
 validEnv :: Env -> M [Term]
 validEnv env = mapM lastValid prefs
   where prefs = tail $ inits env
@@ -125,13 +124,22 @@ ti :: Env -> Term -> M Term
 ti env term = do
   validEnv env
   typeinfer env term
+-}
+
+checkNotInEnv :: Id -> Env -> M ()
+checkNotInEnv x env = maybe (return ()) (const f) $ lookup x env
+  where f = fail ("identifier " ++ x ++ " defined twice in environment")
 
 checkProgramInEnv :: Env -> Program -> M ()
 checkProgramInEnv env [] = OK ()
 checkProgramInEnv env (Assume x typ:prog) = do
-    typecheck env typ star
+    checkNotInEnv x env
+    if betaEqual typ star
+     then return star
+     else typecheck env typ star
     checkProgramInEnv (extendEnv x typ env) prog
 checkProgramInEnv env (Prove x typ term:prog) = do
+    checkNotInEnv x env
     typecheck env typ star
     typecheck env term typ
     checkProgramInEnv (extendEnv x typ env) prog

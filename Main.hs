@@ -1,4 +1,6 @@
 #!/usr/bin/runhaskell
+module Main where
+
 import IO
 import System(getArgs)
 
@@ -8,8 +10,8 @@ import Parser
 checkString :: String -> IO ()
 checkString x = do
     case checkProgram =<< parse x of
-      OK prog   -> putStr "done."
-      Error msg -> putStr ("Error:\n" ++ msg)
+      OK prog   -> putStr "done.\n"
+      Error msg -> putStr ("Error:\n" ++ msg ++ "\n")
 
 checkFile :: String -> IO ()
 checkFile filename = do
@@ -19,7 +21,7 @@ checkFile filename = do
     hClose f
 
 usage :: String
-usage = "Usage: runhaskell Main.hs file.8f\n"
+usage = "Usage: runhaskell Eightfold.hs file.8f.\n"
 
 main :: IO ()
 main = do
