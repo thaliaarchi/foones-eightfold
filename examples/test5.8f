@@ -1,0 +1,33 @@
+
+End = :a*.>aa.
+
+###
+
+Bool = :a*.>a(End a).
+
+True : Bool = :a*,xa,ya.x.
+False : Bool = :a*,xa,ya.y.
+
+If : :a*.>Bool(Bool a)
+   = :a*,xBool,ya,za.xayz.
+
+###
+
+Nat = :a*.>a>(End a)a.
+
+Zero : Nat = :a*,za,f(End a).z.
+
+###
+
+Bit : *.
+0 : Bit.
+1 : Bit.
+
+Neg : > Bool Bool
+    = :x Bool.
+        If Bool x
+          False
+          True.
+
+#? Zero Bool False Neg.
+
