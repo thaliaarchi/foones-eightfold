@@ -42,6 +42,7 @@ Program
     : {- empty -}                           { [] }
     | id colon Exp dot Program              { Assume $1 $3 : $5 }
     | id colon Exp proof Exp dot Program    { Prove $1 $3 $5 : $7 }
+    | id proof Exp dot Program              { Define $1 $3 : $5 }
     | askType Exp dot Program               { AskType $2 : $4 }
     | askValue Exp dot Program              { AskValue $2 : $4 }
 

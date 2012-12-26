@@ -20,6 +20,7 @@ data Response = AnswerType Term Term
 
 data Statement = Assume Id Term
                | Prove Id Term Term
+               | Define Id Term
                | AskType Term
                | AskValue Term
                deriving Show
@@ -175,6 +176,11 @@ checkProgramInEnv env (Prove x typ term:prog) = do
     typeinfer env typ
     typecheck env term typ
     checkProgramInEnv (extendEnvValue x term typ env) prog
+checkProgramInEnv env (Define x term:prog) = do
+    checkNotInEnv x env
+    typ <- typeinfer env term
+    checkProgramInEnv (extendEnvValue x term typ env) prog
+-- Questions
 checkProgramInEnv env (AskType term:prog) = do
     typ <- typeinfer env term
     res <- checkProgramInEnv env prog
