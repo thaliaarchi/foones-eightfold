@@ -148,7 +148,7 @@ checkProgramInEnv env (Assume x typ:prog) = do
     checkProgramInEnv (extendEnv x typ env) prog
 checkProgramInEnv env (Prove x typ term:prog) = do
     checkNotInEnv x env
-    typecheck env typ star
+    typeinfer env typ
     typecheck env term typ
     checkProgramInEnv (extendEnv x typ env) prog
 checkProgramInEnv env (AskType term:prog) = do

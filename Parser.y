@@ -88,6 +88,8 @@ tokenize (x:xs)
      where y  = x : takeWhile p xs
            ys = dropWhile p xs
            p  = isLower
+tokenize ('#':xs)           = tokenize ys
+  where ys = dropWhile (/= '\n') xs
 tokenize ('=':xs)           = TokenProof : tokenize xs
 tokenize (':':xs)           = TokenColon : tokenize xs
 tokenize ('.':xs)           = TokenDot : tokenize xs

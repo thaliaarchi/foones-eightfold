@@ -28,7 +28,11 @@ checkFile filename = do
     hClose f
 
 usage :: String
-usage = "Usage: runhaskell Eightfold.hs file.8f.\n"
+usage = "Usage: runhaskell Main.hs file.8f.\n" ++
+        "\n" ++
+        "Compiling with GHC:\n" ++
+        "    ghc --make Main.hs -o eightfold\n" ++
+        "    ./eightfold file.8f\n"
 
 main :: IO ()
 main = do
