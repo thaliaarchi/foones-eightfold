@@ -51,7 +51,11 @@ tokenize (x:xs)
   | isUpper x = TokenId y : tokenize ys
      where y  = x : takeWhile p xs
            ys = dropWhile p xs
-           p x = isLower x || isDigit x
+           p x = isLower x || isDigit x || x == '_'
+tokenize ('"':xs) = TokenId y : tokenize ys
+  where y  = "\"" ++ takeWhile p xs ++ "\""
+        ys = tail $ dropWhile p xs
+        p x = x /= '"'
 tokenize ('#':xs)           = tokenize ys
   where ys = dropWhile (/= '\n') xs
 tokenize ('=':xs)           = TokenProof : tokenize xs

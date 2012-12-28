@@ -1,0 +1,57 @@
+End  = :a*.>aa.
+End2 = :a*.>aEnd a.
+
+## Show ~ write only string ##
+
+Show : *.
++ : End2Show.
+
+## Booleans ##
+
+Bool = End2.
+
+Bool_true : Bool = :a*,xa,ya.x.
+Bool_false: Bool = :a*,xa,ya.y.
+
+Bool_if
+  : :a*.>Bool(Bool a)
+  = :a*,xBool,ya,za.xayz.
+
+Bool_neg
+  : >BoolBool
+  = :bBool,a*,xa,ya.bayx.
+
+"Bool_true" : Show.
+"Bool_false" : Show.
+Bool_show
+  : >BoolShow
+  = :xBool.xShow"Bool_true""Bool_false".
+
+?? Bool_show (Bool_neg Bool_true).
+?? Bool_show (Bool_neg Bool_false).
+
+## Natural numbers ##
+
+Nat = :a*.>a>(End a)a.
+
+Nat_zero : Nat     = :a*,za,f(End a).z.
+Nat_succ : >NatNat = :xNat,a*,za,f(End a).f(xazf).
+
+"Nat_zero" : Show.
+"Nat_succ" : Show.
+Nat_show
+  : >NatShow
+  = :xNat.xShow"Nat_zero"(+"Nat_succ").
+
+Nat_is_zero : >NatBool = :nNat,a*,xa,ya.nax(>ay).
+
+?? Bool_show (Nat_is_zero (Nat_succ (Nat_succ Nat_zero))).
+
+Nat_add
+  : >Nat>NatNat
+  = :nNat,mNat,a*,za,f(End a).ma(nazf)f.
+
+?? Nat_show (Nat_add
+              (Nat_succ (Nat_succ (Nat_succ Nat_zero)))
+              (Nat_succ (Nat_succ Nat_zero))).
+
