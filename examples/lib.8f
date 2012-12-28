@@ -10,48 +10,87 @@ Show : *.
 
 Bool = End2.
 
-Bool_true : Bool = :a*,xa,ya.x.
-Bool_false: Bool = :a*,xa,ya.y.
+True : Bool = :a*,xa,ya.x.
+False: Bool = :a*,xa,ya.y.
 
-Bool_if
+If
   : :a*.>Bool(Bool a)
   = :a*,xBool,ya,za.xayz.
 
-Bool_neg
+Not
   : >BoolBool
-  = :bBool,a*,xa,ya.bayx.
+  = :xBool.IfBool xFalseTrue.
 
-"Bool_true" : Show.
-"Bool_false" : Show.
+"True" : Show.
+"False" : Show.
 Bool_show
   : >BoolShow
-  = :xBool.xShow"Bool_true""Bool_false".
+  = :xBool.IfShow x"True""False".
 
-?? Bool_show (Bool_neg Bool_true).
-?? Bool_show (Bool_neg Bool_false).
+?? Bool_show(NotTrue).
+?? Bool_show(NotFalse).
+
+## Pairs ##
+
+Pair = :a*,b*,c*.>(>a>bc)c.
+
+Mk_pair : :a*,b*.>a>b Pair ab
+        = :a*,b*,xa,yb,c*,f(>a>bc).fxy.
+
+Pi1 : :a*,b*.>(Pair ab)a
+    = :a*,b*,p(Pair ab).pa(:xa.>bx).
+
+Pi2 : :a*,b*.>(Pair ab)b
+    = :a*,b*,p(Pair ab).pb(>a:yb.y).
+
+?? Bool_show (Pi1BoolBool (Mk_pairBoolBool True False)).
+?? Bool_show (Pi2BoolBool (Mk_pairBoolBool True False)).
 
 ## Natural numbers ##
 
 Nat = :a*.>a>(End a)a.
 
-Nat_zero : Nat     = :a*,za,f(End a).z.
-Nat_succ : >NatNat = :xNat,a*,za,f(End a).f(xazf).
+0 : Nat     = :a*,za,f(End a).z.
+S : >NatNat = :xNat,a*,za,f(End a).f(xazf).
 
-"Nat_zero" : Show.
-"Nat_succ" : Show.
+"0" : Show.
+"S" : Show.
 Nat_show
   : >NatShow
-  = :xNat.xShow"Nat_zero"(+"Nat_succ").
+  = :xNat.xShow"0"(+"S").
 
-Nat_is_zero : >NatBool = :nNat,a*,xa,ya.nax(>ay).
+Is_zero : >NatBool = :nNat,a*,xa,ya.nax(>ay).
 
-?? Bool_show (Nat_is_zero (Nat_succ (Nat_succ Nat_zero))).
+?? Bool_show (Is_zero(S(S 0))).
 
-Nat_add
+Add
   : >Nat>NatNat
   = :nNat,mNat,a*,za,f(End a).ma(nazf)f.
 
-?? Nat_show (Nat_add
-              (Nat_succ (Nat_succ (Nat_succ Nat_zero)))
-              (Nat_succ (Nat_succ Nat_zero))).
+?? Nat_show (Add
+              (S(S(S 0)))
+              (S(S 0))).
+
+# More Pairs : Pair_show
+
+Pair_show
+  : :a*,b*.>(>aShow)>(>bShow)>(Pair ab)Show
+  = :a*,b*,f(>aShow),g(>bShow),p(Pair ab).
+      + (f(Pi1 abp)) (g(Pi2 abp)).
+
+?? Pair_showNatBoolNat_showBool_show
+       (Mk_pairNatBool (Add(S 0)(S 0)) (NotFalse)).
+
+# More Nats : Predecessor
+
+Pred : >NatNat
+     = :nNat. Pi2NatNat
+        (n (PairNatNat)
+           (Mk_pairNatNat 0 0)
+           (:p (PairNatNat). Mk_pair Nat Nat (S(Pi1NatNat p)) (Pi1NatNat p))).
+
+?? Nat_show (Pred 0).
+?? Nat_show (Pred(S 0)).
+?? Nat_show (Pred(S(S 0))).
+?? Nat_show (Pred(S(S(S 0)))).
 

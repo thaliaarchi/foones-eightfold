@@ -143,6 +143,7 @@ reduceInEnv env = fromJust . last . takeWhile p . iterate (>>= reduceInEnv1 env)
 alphaStarLeq :: Term -> Term -> Bool
 alphaStarLeq (Var "*") b = isStarClosure b
   where isStarClosure (Var "*")   = True
+        isStarClosure (Var _)     = False
         isStarClosure (App _ _)   = False
         isStarClosure (Lam _ _ b) = isStarClosure b
 alphaStarLeq (App a1 b1) (App a2 b2) = alphaEqual a1 a2 && alphaEqual b1 b2
