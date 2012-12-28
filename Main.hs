@@ -57,9 +57,11 @@ checkFile mEnv filename = do
 
 checkFiles :: Maybe Env -> [String] -> IO (Maybe Env)
 checkFiles mEnv []       = return mEnv
-checkFiles mEnv (fn:fns) = do
-    mEnv' <- checkFile mEnv fn
-    maybe (fail "aborted") (flip checkFiles fns . Just) mEnv'
+checkFiles mEnv (fn:fns)
+    | head fn == '-' = checkFiles mEnv fns
+    | otherwise      = do
+        mEnv' <- checkFile mEnv fn
+        maybe (fail "aborted") (flip checkFiles fns . Just) mEnv'
 
 toplevel :: Maybe Env -> IO ()
 toplevel mEnv = do
@@ -100,5 +102,8 @@ main = do
 
     putStr "\n"
     res <- checkFiles Nothing argv
-    toplevel res
+
+    if "-s" `elem` argv
+     then return ()
+     else toplevel res
 
