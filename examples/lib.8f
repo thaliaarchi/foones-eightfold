@@ -120,10 +120,36 @@ Nat_leq
   : >Nat>NatBool
   = :nNat,mNat.Is_zero(Sub n m).
 
-Nat_eq = :nNat,mNat.And(Nat_leq n m)(Nat_leq m n).
-
 ?? Show_bool(Nat_leq (S(S 0)) (S(S(S 0)))).
 ?? Show_bool(Nat_leq (S(S 0)) (S(S 0))).
 ?? Show_bool(Nat_leq (S(S 0)) (S 0)).
 ?? Show_bool(Nat_leq (S(S 0)) 0).
+
+Nat_eq = :nNat,mNat.And(Nat_leq n m)(Nat_leq m n).
+
+?? Show_bool(Nat_eq (S(S 0)) (S(S(S 0)))).
+?? Show_bool(Nat_eq (S(S 0)) (S(S 0))).
+?? Show_bool(Nat_eq (S(S 0)) (S 0)).
+
+## Lists ##
+
+List = :a*,b*.>b>(>aEnd b)b.
+
+Nil : List
+    = :a*,b*,zb.>(>aEnd b)z.
+
+Cons
+  : :a*.>aEnd(List a)
+  = :a*,xa,l(List a),b*,zb,f(>aEnd b).fx(lbzf).
+
+"Nil" : Show.
+"Cons" : Show.
+Show_list
+  : :a*.>(>aShow)>(List a)Show
+  = :a*,f(>aShow),l(List a).lShow"Nil"(:xa,rShow.+(+"Cons"(fx))r).
+
+?? Show_list Bool Show_bool (NilBool).
+?? Show_list Bool Show_bool (ConsBool True (NilBool)).
+?? Show_list Bool Show_bool (ConsBool True (ConsBool False (NilBool))).
+?? Show_list Bool Show_bool (ConsBool False (ConsBool True (ConsBool False (NilBool)))).
 
