@@ -2,8 +2,11 @@ Eightfold
 =========
 
 *1) Bugs exist.*
+
 *2) Bugs arise from attachment to correctness with respect to a specification.*
+
 *3) Bugs cease when attachment to correctness ceases.*
+
 *4) Freedom from bugs is possible by practising the Eightfold Path.*
 
 Introduction
