@@ -10,25 +10,39 @@ Show : *.
 
 Bool = End2.
 
-True : Bool = :a*,xa,ya.x.
-False: Bool = :a*,xa,ya.y.
+True : Bool = :a*,xa.>ax.
+False: Bool = :a*.>a:ya.y.
 
 If
   : :a*.>Bool(Bool a)
   = :a*,xBool,ya,za.xayz.
 
 Not
-  : >BoolBool
+  : EndBool
   = :xBool.IfBool xFalseTrue.
 
 "True" : Show.
 "False" : Show.
-Bool_show
+Show_bool
   : >BoolShow
   = :xBool.IfShow x"True""False".
 
-?? Bool_show(NotTrue).
-?? Bool_show(NotFalse).
+?? Show_bool(NotTrue).
+?? Show_bool(NotFalse).
+
+And : End2Bool = :aBool,bBool.IfBool abFalse. 
+
+?? Show_bool(AndTrueTrue).
+?? Show_bool(AndTrueFalse).
+?? Show_bool(AndFalseTrue).
+?? Show_bool(AndFalseFalse).
+
+Or : End2Bool = :aBool,bBool.IfBool aTrue b. 
+
+?? Show_bool(OrTrueTrue).
+?? Show_bool(OrTrueFalse).
+?? Show_bool(OrFalseTrue).
+?? Show_bool(OrFalseFalse).
 
 ## Pairs ##
 
@@ -43,54 +57,73 @@ Pi1 : :a*,b*.>(Pair ab)a
 Pi2 : :a*,b*.>(Pair ab)b
     = :a*,b*,p(Pair ab).pb(>a:yb.y).
 
-?? Bool_show (Pi1BoolBool (Mk_pairBoolBool True False)).
-?? Bool_show (Pi2BoolBool (Mk_pairBoolBool True False)).
+?? Show_bool (Pi1BoolBool (Mk_pairBoolBool True False)).
+?? Show_bool (Pi2BoolBool (Mk_pairBoolBool True False)).
 
 ## Natural numbers ##
 
 Nat = :a*.>a>(End a)a.
 
-0 : Nat     = :a*,za,f(End a).z.
-S : >NatNat = :xNat,a*,za,f(End a).f(xazf).
+0 : Nat    = :a*,za,f(End a).z.
+S : EndNat = :xNat,a*,za,f(End a).f(xazf).
 
 "0" : Show.
 "S" : Show.
-Nat_show
+Show_nat
   : >NatShow
   = :xNat.xShow"0"(+"S").
 
 Is_zero : >NatBool = :nNat,a*,xa,ya.nax(>ay).
 
-?? Bool_show (Is_zero(S(S 0))).
+?? Show_bool (Is_zero(S(S 0))).
 
 Add
-  : >Nat>NatNat
+  : End2Nat
   = :nNat,mNat,a*,za,f(End a).ma(nazf)f.
 
-?? Nat_show (Add
+?? Show_nat (Add
               (S(S(S 0)))
               (S(S 0))).
 
-# More Pairs : Pair_show
+## Pairs 2 ##
 
-Pair_show
+Show_pair
   : :a*,b*.>(>aShow)>(>bShow)>(Pair ab)Show
   = :a*,b*,f(>aShow),g(>bShow),p(Pair ab).
       + (f(Pi1 abp)) (g(Pi2 abp)).
 
-?? Pair_showNatBoolNat_showBool_show
+?? Show_pairNatBoolShow_natShow_bool
        (Mk_pairNatBool (Add(S 0)(S 0)) (NotFalse)).
 
-# More Nats : Predecessor
+## Natural numbers 2 ##
 
-Pred : >NatNat
-     = :nNat. Pi2NatNat
-        (n (PairNatNat)
+Pred : EndNat
+     = :nNat.Pi2NatNat
+        (n(PairNatNat)
            (Mk_pairNatNat 0 0)
-           (:p (PairNatNat). Mk_pair Nat Nat (S(Pi1NatNat p)) (Pi1NatNat p))).
+           (:p(PairNatNat).Mk_pairNatNat (S(Pi1NatNat p)) (Pi1NatNat p))).
 
-?? Nat_show (Pred 0).
-?? Nat_show (Pred(S 0)).
-?? Nat_show (Pred(S(S 0))).
-?? Nat_show (Pred(S(S(S 0)))).
+?? Show_nat (Pred 0).
+?? Show_nat (Pred(S 0)).
+?? Show_nat (Pred(S(S 0))).
+?? Show_nat (Pred(S(S(S 0)))).
+
+Sub : End2Nat = :nNat,mNat.mNat nPred.
+
+?? Show_nat(Sub (S(S(S(S(S 0))))) (S(S 0))).
+
+Mul : End2Nat = :nNat,mNat.mNat 0(Add n).
+
+?? Show_nat(Mul (S(S(S(S(S 0))))) (S(S 0))).
+
+Nat_leq
+  : >Nat>NatBool
+  = :nNat,mNat.Is_zero(Sub n m).
+
+Nat_eq = :nNat,mNat.And(Nat_leq n m)(Nat_leq m n).
+
+?? Show_bool(Nat_leq (S(S 0)) (S(S(S 0)))).
+?? Show_bool(Nat_leq (S(S 0)) (S(S 0))).
+?? Show_bool(Nat_leq (S(S 0)) (S 0)).
+?? Show_bool(Nat_leq (S(S 0)) 0).
 
