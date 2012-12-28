@@ -1,9 +1,10 @@
 
-End = :a*.>aa.
+End  = :a*.>aa.
+End2 = :a*.>a End a.
 
 ###
 
-Bool = :a*.>a(End a).
+Bool = End2.
 
 True : Bool = :a*,xa,ya.x.
 False : Bool = :a*,xa,ya.y.
@@ -24,10 +25,15 @@ Bit : *.
 1 : Bit.
 
 Neg : > Bool Bool
-    = :x Bool.
-        If Bool x
-          False
-          True.
+    = :b Bool, a *, x a, y a.
+          b a y x.
+
+?? Neg False.
+        
+#   = :x Bool.
+#       If Bool x
+#         False
+#         True.
 
 #? Zero Bool False Neg.
 

@@ -8,9 +8,9 @@ Int : *.
 0 : Int.
 1 : Int.
 
-! False Int 0 1.
+?? False Int 0 1.
 
 #Bool : :a*,xa,ya.a.
-#! Bool.
+#?? Bool.
 
 

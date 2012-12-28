@@ -1,34 +1,80 @@
-module Lang(Id, Term(..), Program, Statement(..), M(..), ProgramResponse, Response(..), checkProgram) where
+module Lang(Id, Term(..), Program, Statement(..), M(..), Env, checkProgram) where
 
+import Char
 import Maybe
 import List
 import Control.Monad
 
-type Id = String
+import Lexer
 
 data Term = Var Id 
           | Lam Id Term Term
           | App Term Term
-          deriving Show
+
+instance Show Term where
+    show = joinToks . snd . rec
+      where rec (Var x) = (lAtom, [x])
+            rec (Lam x typ term)
+              | x `notElem` vs = (lExp, [">"] ++
+                                        paren lAtom (rec typ) ++
+                                        paren lExp (rec term))
+              | otherwise = (lExp, [":", x] ++
+                                   paren lAppExp (rec typ) ++
+                                   ["."] ++
+                                   paren lExp (rec term))
+              where vs = freeVars =<< [typ, term]
+            rec (App a b) = (lAppExp, paren lAppExp (rec a) ++ paren lAtom (rec b))
+            paren k1 (k2, x)
+              | k1 < k2   = ["("] ++ x ++ [")"]
+              | otherwise = x
+            lExp    = 3
+            lAppExp = 2
+            lAtom   = 1
+            joinToks []           = []
+            joinToks [v]          = v
+            joinToks (".":":":ws) = "," ++ joinToks ws
+            joinToks (v:w:ws)     = v ++ sep ++ joinToks (w:ws)
+              where
+                sep
+                  | isLongIdent v && isIdent w      = " "
+                  | isNumIdent v && isIdent w       = " "
+                  | otherwise                       = ""
 
 type Program = [Statement]
-type ProgramResponse = [Response]
-
-data Response = AnswerType Term Term
-              | AnswerValue Term Term
-              deriving Show
 
 data Statement = Assume Id Term
                | Prove Id Term Term
                | Define Id Term
                | AskType Term
+               | AnswerType Term Term
                | AskValue Term
-               deriving Show
+               | AnswerValue Term Term Term
 
-type Env = [EnvFact]
+instance Show Statement where
+    show (Assume x a)        = x ++ " : " ++ show a ++ "."
+    show (Prove x a b)       = x ++ " : " ++ show a ++ " = " ++ show b ++ "."
+    show (Define x a)        = x ++ " = " ++ show a ++ "."
+    show (AskType a)         = "? " ++ show a ++ "."
+    show (AnswerType a b)    = "! " ++ show a ++ " : " ++ show b ++ "."
+    show (AskValue a)        = "?? " ++ show a ++ "."
+    show (AnswerValue a b c) = "!! " ++ show a ++ " : " ++ show b ++ " = " ++ show c ++ "."
+
+data Env = Env [EnvFact]
+
+joinSep :: String -> [String] -> String
+joinSep sep []       = ""
+joinSep sep [x]      = x
+joinSep sep (x:y:xs) = x ++ sep ++ joinSep sep (y:xs)
+
+instance Show Env where
+	show (Env env) = "{" ++ (joinSep " ; " . map show $ env) ++ "}"
+
 data EnvFact = EnvType Id Term
              | EnvValue Id Term Term
-             deriving Show
+
+instance Show EnvFact where
+    show (EnvType x a)    = x ++ " : " ++ show a
+    show (EnvValue x a b) = x ++ " : " ++ show a ++ " = " ++ show b
 
 data M a = Error String
          | OK a
@@ -76,24 +122,6 @@ alphaEqual (Lam x s a) (Lam y t b) = alphaEqual s t && alphaEqual a' b'
 alphaEqual _ _                     = False
 
 ---- Reduction
---
---reduce1 :: Term -> Maybe Term
---reduce1 (Var x)               = Nothing
---reduce1 (Lam x typ body)      = return . Lam x typ =<< reduce1 body
---reduce1 (App (Lam x typ a) b) = return (substitute a x b)
---reduce1 (App a b)             = return . lApp =<< applyJust reduce1 [a, b]
---  where lApp [x, y] = App x y
---
---reduce :: Term -> Term
---reduce = fromJust . last . takeWhile p . iterate (>>= reduce1) . return
---  where p = maybe False (const True)
---
---betaEqual :: Term -> Term -> Bool
---betaEqual term1 term2 = alphaEqual n1 n2
---  where n1 = reduce term1
---        n2 = reduce term2
-
----- Reduction with definitions
 
 reduceInEnv1 :: Env -> Term -> Maybe Term
 reduceInEnv1 env (Var x)               = lookupEnvValue x env
@@ -114,13 +142,13 @@ betaEqualInEnv env term1 term2 = alphaEqual n1 n2
 ----
 
 emptyEnv :: Env
-emptyEnv = []
+emptyEnv = Env []
 
 extendEnvType :: Id -> Term -> Env -> Env
-extendEnvType x typ env = EnvType x typ:env
+extendEnvType x typ (Env env) = Env (EnvType x typ:env)
 
 extendEnvValue :: Id -> Term -> Term -> Env -> Env
-extendEnvValue x trm typ env = EnvValue x trm typ:env
+extendEnvValue x trm typ (Env env) = Env (EnvValue x trm typ:env)
 
 envType :: EnvFact -> [(Id, Term)]
 envType (EnvType x s)    = [(x, s)]
@@ -131,10 +159,10 @@ envValue (EnvValue x v _) = [(x, v)]
 envValue _                = []
 
 lookupEnvType :: Id -> Env -> Maybe Term
-lookupEnvType x env = lookup x (concatMap envType env)
+lookupEnvType x (Env env) = lookup x (concatMap envType env)
 
 lookupEnvValue :: Id -> Env -> Maybe Term
-lookupEnvValue x env = lookup x (concatMap envValue env)
+lookupEnvValue x (Env env) = lookup x (concatMap envValue env)
 
 star :: Term
 star = Var "*"
@@ -165,31 +193,39 @@ checkNotInEnv :: Id -> Env -> M ()
 checkNotInEnv x env = maybe (return ()) (const f) $ lookupEnvType x env
   where f = fail ("identifier " ++ x ++ " defined twice in environment")
 
-checkProgramInEnv :: Env -> Program -> M ProgramResponse
-checkProgramInEnv env [] = OK []
-checkProgramInEnv env (Assume x typ:prog) = do
+addRet :: Statement -> (Env, Program) -> M (Env, Program)
+addRet s (e, p) = return (e, s : p)
+
+checkProgramInEnv :: Env -> Program -> M (Env, Program)
+-- Statements
+checkProgramInEnv env [] = OK (env, [])
+checkProgramInEnv env p@(Assume x typ:prog) = do
     checkNotInEnv x env
     typeinfer env typ
-    checkProgramInEnv (extendEnvType x typ env) prog
-checkProgramInEnv env (Prove x typ term:prog) = do
+    res <- checkProgramInEnv (extendEnvType x typ env) prog
+    addRet (head p) res
+checkProgramInEnv env p@(Prove x typ term:prog) = do
     checkNotInEnv x env
     typeinfer env typ
     typecheck env term typ
-    checkProgramInEnv (extendEnvValue x term typ env) prog
-checkProgramInEnv env (Define x term:prog) = do
+    res <- checkProgramInEnv (extendEnvValue x term typ env) prog
+    addRet (head p) res
+checkProgramInEnv env p@(Define x term:prog) = do
     checkNotInEnv x env
     typ <- typeinfer env term
-    checkProgramInEnv (extendEnvValue x term typ env) prog
--- Questions
+    res <- checkProgramInEnv (extendEnvValue x term typ env) prog
+    addRet (head p) res
+-- Queries
 checkProgramInEnv env (AskType term:prog) = do
     typ <- typeinfer env term
     res <- checkProgramInEnv env prog
-    return (AnswerType term typ : res)
+    addRet (AnswerType term typ) res
 checkProgramInEnv env (AskValue term:prog) = do
-    typeinfer env term
+    typ <- typeinfer env term
     res <- checkProgramInEnv env prog
-    return (AnswerValue term (reduceInEnv env term) : res)
+    addRet (AnswerValue term typ (reduceInEnv env term)) res
 
-checkProgram :: Program -> M ProgramResponse
-checkProgram = checkProgramInEnv (extendEnvType "*" star emptyEnv)
+checkProgram :: Maybe Env -> Program -> M (Env, Program)
+checkProgram mEnv = checkProgramInEnv env
+    where env = maybe (extendEnvType "*" star emptyEnv) id mEnv
 

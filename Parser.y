@@ -1,25 +1,14 @@
 {
-module Parser(parse) where
+module Parser(Parser, parseProgram, parseQuery) where
 
-import Char
-
+import Lexer
 import Lang
 
-data Token = TokenColon
-           | TokenFun
-           | TokenId Id
-           | TokenLParen
-           | TokenRParen
-           | TokenDot
-           | TokenComma
-           | TokenProof
-           | TokenAskType
-           | TokenAskValue
-           deriving (Show)
-
+type Parser = String -> M Program
 }
 
-%name parseTokens
+%name    parseProgramTokens
+%partial parseQueryTokens    Query
 %tokentype { Token }
 %error { parseError }
 %monad { M }
@@ -33,18 +22,29 @@ data Token = TokenColon
     comma    { TokenComma }
     dot      { TokenDot }
     proof    { TokenProof }
-    askType  { TokenAskType }
-    askValue { TokenAskValue }
+    ask      { TokenAsk }
 
 %%
 
 Program
-    : {- empty -}                           { [] }
-    | id colon Exp dot Program              { Assume $1 $3 : $5 }
-    | id colon Exp proof Exp dot Program    { Prove $1 $3 $5 : $7 }
-    | id proof Exp dot Program              { Define $1 $3 : $5 }
-    | askType Exp dot Program               { AskType $2 : $4 }
-    | askValue Exp dot Program              { AskValue $2 : $4 }
+    : {- empty -}         { [] }
+    | Stmt dot Program    { $1 : $3 }
+
+Query
+    : {- empty -}     { [] }
+    | Stmt OptDot     { [$1] }
+    | Exp OptDot      { [AskType $1] }
+
+OptDot
+    : {- empty -} { () }
+    | dot         { () }
+
+Stmt
+    : id colon Exp            { Assume $1 $3 }
+    | id colon Exp proof Exp  { Prove $1 $3 $5 }
+    | id proof Exp            { Define $1 $3 }
+    | ask Exp                 { AskType $2 }
+    | ask ask Exp             { AskValue $3 }
 
 Exp
     : colon VarTypeList dot Exp       { foldr (uncurry Lam) $4 $2 }
@@ -68,41 +68,10 @@ Atom
 parseError :: [Token] -> M a
 parseError msg = fail "parse error"
 
-isBlank :: Char -> Bool 
-isBlank x = x `elem` " \n\t\r"
+parseProgram :: Parser
+parseProgram = parseProgramTokens . tokenize
 
-isSymbol :: Char -> Bool 
-isSymbol x = x `elem` "_+-*"
-
-tokenize :: String -> [Token]
-tokenize (x:xs)
-  | isBlank x = tokenize xs
-tokenize (x:xs)
-  | isLower x || isSymbol x = TokenId [x] : tokenize xs
-tokenize (x:xs)
-  | isDigit x = TokenId y : tokenize ys
-     where y  = x : takeWhile p xs
-           ys = dropWhile p xs
-           p  = isDigit
-tokenize (x:xs)
-  | isUpper x = TokenId y : tokenize ys
-     where y  = x : takeWhile p xs
-           ys = dropWhile p xs
-           p  = isLower
-tokenize ('#':xs)           = tokenize ys
-  where ys = dropWhile (/= '\n') xs
-tokenize ('=':xs)           = TokenProof : tokenize xs
-tokenize (':':xs)           = TokenColon : tokenize xs
-tokenize ('.':xs)           = TokenDot : tokenize xs
-tokenize (',':xs)           = TokenComma : tokenize xs
-tokenize ('(':xs)           = TokenLParen : tokenize xs
-tokenize (')':xs)           = TokenRParen : tokenize xs
-tokenize ('>':xs)           = TokenFun : tokenize xs
-tokenize ('?':xs)           = TokenAskType : tokenize xs
-tokenize ('!':xs)           = TokenAskValue : tokenize xs
-tokenize [] = []
-
-parse :: String -> M Program
-parse = parseTokens . tokenize
+parseQuery :: Parser
+parseQuery = parseQueryTokens . tokenize
 
 }
