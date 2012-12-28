@@ -25,10 +25,15 @@ Bit : *.
 1 : Bit.
 
 Neg : > Bool Bool
-    = :b Bool, a *, x a, y a.
-          b a y x.
+    = :xBool.If Bool x False True.
 
 ?? Neg False.
+
+#Neg : > Bool Bool
+#    = :b Bool, a *, x a, y a.
+#          b a y x.
+
+#?? Neg False.
         
 #   = :x Bool.
 #       If Bool x

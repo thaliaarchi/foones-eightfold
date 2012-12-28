@@ -134,8 +134,26 @@ reduceInEnv :: Env -> Term -> Term
 reduceInEnv env = fromJust . last . takeWhile p . iterate (>>= reduceInEnv1 env) . return
   where p = maybe False (const True)
 
-betaEqualInEnv :: Env -> Term -> Term -> Bool
-betaEqualInEnv env term1 term2 = alphaEqual n1 n2
+--betaEqualInEnv :: Env -> Term -> Term -> Bool
+--betaEqualInEnv env term1 term2 = alphaEqual n1 n2
+--  where n1 = reduceInEnv env term1
+--        n2 = reduceInEnv env term2
+
+-- Leq comparisons return True if term1 is *more generic* than term2
+alphaStarLeq :: Term -> Term -> Bool
+alphaStarLeq (Var "*") b = isStarClosure b
+  where isStarClosure (Var "*")   = True
+        isStarClosure (App _ _)   = False
+        isStarClosure (Lam _ _ b) = isStarClosure b
+alphaStarLeq (App a1 b1) (App a2 b2) = alphaEqual a1 a2 && alphaEqual b1 b2
+alphaStarLeq (Lam x s a) (Lam y t b) = alphaEqual s t && alphaStarLeq a' b'
+  where a' = substitute a x z
+        b' = substitute b y z
+        z  = Var $ freshId x [a, b, s, t]
+alphaStarLeq _ _                     = False
+
+betaLeqInEnv :: Env -> Term -> Term -> Bool
+betaLeqInEnv env term1 term2 = alphaEqual n1 n2 || alphaStarLeq n1 n2
   where n1 = reduceInEnv env term1
         n2 = reduceInEnv env term2
 
@@ -170,8 +188,8 @@ star = Var "*"
 typecheck :: Env -> Term -> Term -> M Term
 typecheck env inferTerm typ = do
     typ' <- typeinfer env inferTerm
-    if betaEqualInEnv env typ typ'
-     then return typ
+    if betaLeqInEnv env typ typ'
+     then return typ'
      else fail ("types do not match: " ++ show typ ++ " -- " ++ show typ' ++ " in env " ++ show env)
 
 typeinfer :: Env -> Term -> M Term
