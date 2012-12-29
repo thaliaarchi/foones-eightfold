@@ -1,0 +1,70 @@
+# load lib.8f
+
+## Propositions are represented by the Prop type ##
+
+Prop : *.
+
+# Basic connectives
+True : Prop.
+And : End2Prop.
+Not : EndProp.
+Forall : :a*.>(>aProp)Prop.
+
+## Derivations are represented by the D type constructor ##
+
+D : >Prop*.
+
+# Axiom: True is derivable
+Dtrue : DTrue.
+
+# Natural deduction rules for conjunction
+Andi : :pProp,qProp.>(D p)>(D q)(D(And p q)).
+Ande1 : :pProp,qProp.>(D(And p q))(D p).
+Ande2 : :pProp,qProp.>(D(And p q))(D q).
+
+? AndiTrueTrue Dtrue Dtrue.
+? Ande1TrueTrue (AndiTrueTrue Dtrue Dtrue).
+? Ande2TrueTrue (AndiTrueTrue Dtrue Dtrue).
+
+# Natural deduction rules for negation
+Noti : :pProp.>(>(D p)(:qProp.D q))(D(Not p)).
+Note : :pProp.>(D p)>(D(Not p))(:qProp.D q).
+
+# Classical rule of double negation
+Dneg : :pProp.>(D(Not(Not p)))p.
+
+### Definition of "Or" in terms of "And" and "Not"
+
+Or : End2Prop = :pProp,qProp.Not(And(Not p)(Not q)).
+
+# Introduction of (p v q) from p
+Ori1 : :p Prop, q Prop. > (D p) (D (Or p q))
+     = :p Prop, q Prop, D_p D p.
+         Noti (And (Not p) (Not q))
+              # >(D (And (Not p) (Not q)))(:qProp D q)
+              (: D_anpnq (D (And (Not p) (Not q))), q Prop.
+                 # D q
+                 Note p
+                      D_p                             # D p
+                      (Ande1 (Not p) (Not q) D_anpnq) # D (Not p)
+                      q
+              ).
+
+# Introduction of (p v q) from q
+Ori2 : :p Prop, q Prop. > (D q) (D (Or p q))
+     = :p Prop, q Prop, D_q D q.
+         Noti (And (Not p) (Not q))
+              # >(D (And (Not p) (Not q)))(:qProp D q)
+              (: D_anpnq (D (And (Not p) (Not q))), p Prop.
+                 # D p
+                 Note q
+                      D_q                             # D q
+                      (Ande2 (Not p) (Not q) D_anpnq) # D (Not q)
+                      p
+              ).
+
+# Elimination of (p v q) from (p => r) and (q => r)
+# ...
+
+#Imp : End2Prop.
+#Exists : :a*.>(>aProp)Prop.

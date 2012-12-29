@@ -48,6 +48,7 @@ checkString parse mEnv str = do
 
 checkFile :: Maybe Env -> String -> IO (Maybe Env)
 checkFile mEnv filename = do
+    putStr $ "\n[Loading file " ++ filename ++ "].\n"
     f <- openFile filename ReadMode
     s <- hGetContents f
     res <- checkString parseProgram mEnv s
