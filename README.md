@@ -75,7 +75,7 @@ The following is a very simple interaction:
 
     8f> ?? (:xt.x)a      # query : what is the result of applying the
                          #         identity to "a"
-    !! (:xt.x)a : t = a  # answer: it has type "t" and evaluates to "a"
+    !! (:xt.x)a : t = a. # answer: it has type "t" and evaluates to "a"
 
     8f> b : >tt          # declare "b" as a new constructor that
                          # takes a term of type "t" and returns
@@ -84,7 +84,7 @@ The following is a very simple interaction:
 
     8f> ?? ba            # query : what is the result of applying such
                          #         constructor to a?
-    !! ba                # answer: it has type "t" and evaluates to "ba"
+    !! ba : t = ba.      # answer: it has type "t" and evaluates to "ba"
 
     8f> ?? bb            # query : what is the result of applying "b"
                          #         to "b"
