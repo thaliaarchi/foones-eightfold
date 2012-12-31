@@ -94,7 +94,7 @@ applyJust f (x:xs) = maybe (return . (x:) =<< applyJust f xs) (return . (:xs)) (
 freeVars :: Term -> [Id]
 freeVars (Var x)       = [x]
 freeVars (App a b)     = freeVars a `union` freeVars b
-freeVars (Lam x typ a) = (freeVars typ `union` freeVars a) \\ [x]
+freeVars (Lam x typ a) = freeVars typ `union` (freeVars a \\ [x])
 
 freshId :: Id -> [Term] -> Id
 freshId x as = head . dropWhile (`elem` vs) . map (x ++) $ suffixes
