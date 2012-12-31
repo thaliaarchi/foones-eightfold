@@ -106,7 +106,7 @@ category, but are regular terms:
 In terms of lexical syntax, a variable is either a lowercase character
 followed by zero or more digits (`[a-z][0-9]*`),
 a sequence of digits (`[0-9]+`),
-a symbol (`[_+-*/]`), `-`, `*`, or an uppercase character followed by
+a symbol (`[_+-*/]`), or an uppercase character followed by
 lowercase characters and digits (`[A-Z][_a-z0-9]*`).
 Notice that two uppercase characters
 in the same identifier are not allowed, which is for `FooBar` to
