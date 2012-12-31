@@ -183,6 +183,12 @@ lookupEnvType x (Env env) = lookup x (concatMap envType env)
 lookupEnvValue :: Id -> Env -> Maybe Term
 lookupEnvValue x (Env env) = lookup x (concatMap envValue env)
 
+envTerms :: Env -> [Term]
+envTerms (Env env) = t envType ++ t envValue
+  where t f = map snd (f =<< env)
+
+----
+
 star :: Term
 star = Var "*"
 
@@ -205,8 +211,11 @@ typeinfer env (App a b) = do
         _ -> fail ("in application " ++ show (App a b) ++ " -- function is not an abstraction, its type is " ++ show a' ++ "\n")
 typeinfer env (Lam x s a) = do
     typeinfer env s
-    b <- typeinfer (extendEnvType x s env) a
-    return $ Lam x s b
+    b <- typeinfer (extendEnvType z s env) a'
+    return $ Lam z s b
+  where
+    z  = freshId x (envTerms env)
+    a' = substitute a x (Var z)
 
 checkNotInEnv :: Id -> Env -> M ()
 checkNotInEnv x env = maybe (return ()) (const f) $ lookupEnvType x env
