@@ -70,7 +70,8 @@ The following is a very simple interaction:
     8f> ? :xt.x          # query : what is the type of a function that takes
                          #         an "x" of type "t" and returns "x"
     ! :xt.x : >tt.       # answer: it has type ">tt", i.e. it takes
-                         #         a "t" and returns an "t"
+                         #         a term of type "t" and returns a term
+                         #         of type "t"
 
     8f> ?? (:xt.x)a      # query : what is the result of applying the
                          #         identity to "a"
