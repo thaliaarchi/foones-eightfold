@@ -171,8 +171,8 @@ two possible interpretations:
   interested in typechecking a term to ensure it effectively
   has a certain type.
 
-Facts can be of three types: type declarations, value declarations or
-type/value declarations.
+Facts can be of three types: type declarations, type/value declarations
+or value declarations.
 
 Queries can be of two types: type queries or type/value queries.
 
@@ -212,4 +212,47 @@ Declarations are read from top to bottom.
 For a declaration to be correct, the right hand side,
 i.e. the type, has to have a kind in the current context
 (given by all previous declarations).
+
+Under the proof assistant interpretation, this declares
+axioms and inference rules in the system.
+For example:
+
+    
+    # Declare a datatype for representing strings of bits.
+    # For example "1(0(1(1 Empty)))" is a term of type
+    # "Bits" representing the binary string "1011".
+
+    Bits : *.
+    Empty : Bits.
+    0     : > Bits Bits.
+    1     : > Bits Bits.
+
+    # Declare a predicate for representing the statement
+    # that a given string of bits ends in zero.
+    #
+    # For example:
+    #     Ends_in_0 (1(0 Empty))
+    # represents the fact that "10" ends in "0". While:
+    #     Ends_in_0 (1(1(1 Empty)))
+    # represents the fact that "111" ends in "0".
+    #
+    # Note that a term need not represent a true statement to
+    # be well formed.
+
+    Ends_in_0 : > Bits *.
+
+    # The following definitions represent a formal system
+    # with one axiom and two rules.
+    #
+    # These rules ensure that only the true statements
+    # are inhabited. Well, technically not, since Eightfold
+    # is probably inconsistent anyway :)
+    #
+    # The axiom states that "0" ends in 0.
+    # Rule0 states that if w ends in 0, also does 0w.
+    # Rule1 states that if w ends in 0, also does 1w.
+
+    Axiom: Ends_in_0 (0 Empty).
+    Rule0: :w Bits. > (Ends_in_0 w) (Ends_in_0 (0 w)).
+    Rule1: :w Bits. > (Ends_in_0 w) (Ends_in_0 (1 w)).
 
