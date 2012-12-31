@@ -32,8 +32,8 @@ To compile the project with GHC:
 
     $ ghc --make Main.hs -o eightfold
 
-How Eightfold works
--------------------
+Overview
+--------
 
 Eightfold is a combination of a reduction and a type-checking
 engine.
@@ -94,6 +94,19 @@ The following is a very simple interaction:
     in application bb -- argument has wrong type
     types do not match: t -- >tt in env {b : >tt ; a : t ; t : * ; * : *}
 
+In Eightfold, the variable `*` is globally bound to the basic
+kind, i.e. the kind of all data types. The type of `*` is `*`,
+which presumably makes the system inconsistent (and thus uninteresting)
+from a strictly logical point of view:
+
+    8f> ? *
+    ! * : *.
+
+Syntax
+------
+
+### Syntax for terms
+
 Eightfold terms are given by a syntax similar to that
 of simply typed lambda calculus, with the difference that
 type annotations do not belong to a separate syntactic
@@ -119,7 +132,7 @@ free occurrences of `x` in `N` are bound in `:xM.N`.
 
 For instance, `:XInt.ConsXNil` is an abstraction
 that takes an `X` of type `Int` and applies `Cons` to
-`X` and `Nil`. (This could, presumably, be a function that
+`X` and `Nil`. (This could, for example, be a function that
 takes an integer and builds a singleton).
 
 Beyond the syntax presented above, Eightfold allows
@@ -135,4 +148,68 @@ an abbreviation for
 `: [var1] [type1] . : [...] . [body]`.
 Thus, `:XBool,YBool.AndXY` abbreviates
 `:XBool.:YBool.AndXY`.
+
+### Syntax for programs
+
+An Eightfold program is a sequence of rules and queries,
+terminated by periods.
+
+By Curry-Howard, one can view an Eightfold script
+either as a program or as a proof. Most language
+constructs can be analyzed under the light of
+two possible interpretations:
+
+* Seen as a programming language, terms encode programs
+  and types encode the usual data types. In this case
+  the focus is usually centered in the dynamic semantics
+  of the programs, i.e. one is interested in normalizing
+  a term to know its normal form.
+
+* Seen as a proof assistant, types encode propositions
+  and terms encode proofs. Here, one is usually
+  less interested in normalizing terms, and more
+  interested in typechecking a term to ensure it effectively
+  has a certain type.
+
+Facts can be of three types: type declarations, value declarations or
+type/value declarations.
+
+Queries can be of two types: type queries or type/value queries.
+
+#### Type declarations
+
+Type declarations are of the form `[var] : [term]`.
+
+Under the program interpretation, this declares a basic type,
+type constructor, constant or constructor. For example:
+
+    # Declare "Bool" as a basic type and "True" and "False"
+    # as boolean constants:
+
+    Bool : *.
+
+    True : Bool.
+    False : Bool.
+
+    # Declare "List" as type constructor,
+    # so that "List Bool" is a type.
+    List : >**.
+
+    # Declare "Nil" as a constructor that given a type "a"
+    # returns a list of "a".
+    # For instance "Nil Bool" denotes the empty list of booleans.
+    Nil : :a*.List a.
+
+    # Declare "Cons" as a function that given a type "a", an
+    # element of type "a", and a list of "a" returns another
+    # list of `a`. For instance "Cons Bool True (Nil Bool)"
+    # denotes the singleton list `[True]`.
+    Cons : :a*.>a>(List a)(List a).
+
+When this program is loaded, Eightfold checks that all
+declarations are correct, and prints them out.
+Declarations are read from top to bottom.
+For a declaration to be correct, the right hand side,
+i.e. the type, has to have a kind in the current context
+(given by all previous declarations).
 
