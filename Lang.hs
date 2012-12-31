@@ -37,7 +37,7 @@ instance Show Term where
               where
                 sep
                   | isLongIdent v && isIdent w      = " "
-                  | isNumIdent v && isIdent w       = " "
+                  | isIdent v && isNumIdent w       = " "
                   | otherwise                       = ""
 
 type Program = [Statement]

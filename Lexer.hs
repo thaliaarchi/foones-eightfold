@@ -20,14 +20,14 @@ isBlank :: Char -> Bool
 isBlank x = x `elem` " \n\t\r"
 
 isSymbol :: Char -> Bool 
-isSymbol x = x `elem` "_+-*"
+isSymbol x = x `elem` "_+-*/"
 
 --
 isIdent :: String -> Bool
 isIdent xs = isShortIdent xs || isNumIdent xs || isLongIdent xs
 
 isShortIdent :: String -> Bool
-isShortIdent xs = length xs == 1 && isLower (head xs)
+isShortIdent xs = length xs > 0 && isLower (head xs)
 
 isNumIdent :: String -> Bool
 isNumIdent xs = length xs > 0 && isDigit (head xs)
@@ -41,7 +41,10 @@ tokenize :: String -> [Token]
 tokenize (x:xs)
   | isBlank x = tokenize xs
 tokenize (x:xs)
-  | isLower x || isSymbol x = TokenId [x] : tokenize xs
+  | isLower x || isSymbol x = TokenId y : tokenize ys
+     where y  = x : takeWhile p xs
+           ys = dropWhile p xs
+           p x = isDigit x
 tokenize (x:xs)
   | isDigit x = TokenId y : tokenize ys
      where y  = x : takeWhile p xs
