@@ -202,7 +202,7 @@ type constructor, constant or constructor. For example:
 
     # Declare "Cons" as a function that given a type "a", an
     # element of type "a", and a list of "a" returns another
-    # list of `a`. For instance "Cons Bool True (Nil Bool)"
+    # list of "a". For instance "Cons Bool True (Nil Bool)"
     # denotes the singleton list `[True]`.
     Cons : :a*.>a>(List a)(List a).
 
