@@ -21,6 +21,44 @@ as a logical framework, i.e. a proof assistant for user-defined deductive
 systems, encoding, by means of Curry-Howard, judgements as types and
 derivations as programs.
 
+Example: factorial
+------------------
+
+The following Eightfold program calculates factorials. The query (`?? ...`)
+asks for the factorial of 5:
+
+    u=*.
+    t::a*,b*.>a>ba=:a*,b*,xa.>bx.
+    e::a*,b*.>a>bb=:a*,b*.>a:yb.y.
+    f=:au.>aa.
+    f2=:au.>afa.
+    h=:au.f(fa).
+    i::au.fa=:au,xa.x.
+    0:h=:au.>(fa)ia.
+    s:fh=:nh,au,gfa,za.g(nagz).
+    1=s(0).
+    l:f2h=:nh,mh.mh(nhs)0.
+    2=:au,bu,cu.>(>a>bc)c.
+    +::au,bu.>a>b(2ab)
+     =:au,bu,xa,yb,cu,g(>a>bc).gxy.
+    -1::au,bu.>(2ab)a
+      =:au,bu,p(2ab).pa(tab).
+    -2::au,bu.>(2ab)b
+      =:au,bu,p(2ab).pb(eab).
+    o:fh
+     =:nh.-2hh(n(2hh)
+                (:p(2hh).+hh(s(-1hhp))
+                            (l(s(-1hhp))(-2hhp)))
+                (+hh(0)1)).
+    R:u.Z:R.S:>RR.
+    Factorial :>hR=:nh.onRSZ.
+
+    ?? Factorial (s(s(s(s(s(0)))))).
+
+When loaded, the query is answered with 120 (in unary):
+
+    !! Factorial(s(s(s(s(s 0))))) : R = S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S Z))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))).
+
 Installation
 ------------
 
@@ -335,9 +373,9 @@ that the string "010" ends in zero:
 
     # ... previous declarations
 
-	Theorem_010_ends_in_0
-	  : Ends_in_0 (0(1(0 Empty)))
-	  = Rule0 (1(0 Empty)) (Rule1 (0 Empty) Axiom).
+    Theorem_010_ends_in_0
+      : Ends_in_0 (0(1(0 Empty)))
+      = Rule0 (1(0 Empty)) (Rule1 (0 Empty) Axiom).
 
 The program is loaded with no errors, which means the given
 term effectively has type `Ends_in_0 (0(1(0 Empty)))`,
