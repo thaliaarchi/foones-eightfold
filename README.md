@@ -171,10 +171,16 @@ two possible interpretations:
   interested in typechecking a term to ensure it effectively
   has a certain type.
 
-Facts can be of three types: type declarations, type/value declarations
-or value declarations.
+Facts can be of three forms:
+* type declarations: `var : type` which adds the assumption that `var` has type `type`
+* type/value declarations: `var : type = term` which binds `var` to `term`,
+  checking that `term` is of type `type`
+* value declarations: `var = term` which binds `var` to `term`
+  (checking that `term` is typable)
 
-Queries can be of two types: type queries or type/value queries.
+Queries can be of two forms:
+* type queries: `? term` which returns `! term : type`
+* type/value queries: `?? term` which returns `!! term : type = normal_form`
 
 #### Type declarations
 
@@ -191,6 +197,9 @@ type constructor, constant or constructor. For example:
     True : Bool.
     False : Bool.
 
+    ? True.
+    # ! True : Bool.
+
     # Declare "List" as type constructor,
     # so that "List Bool" is a type.
     List : >**.
@@ -200,11 +209,18 @@ type constructor, constant or constructor. For example:
     # For instance "Nil Bool" denotes the empty list of booleans.
     Nil : :a*.List a.
 
+    ? Nil Bool.
+    # ! Nil Bool : List Bool.
+
     # Declare "Cons" as a function that given a type "a", an
     # element of type "a", and a list of "a" returns another
     # list of "a". For instance "Cons Bool True (Nil Bool)"
     # denotes the singleton list `[True]`.
     Cons : :a*.>a>(List a)(List a).
+
+    ? Cons Bool True (Cons Bool False (Nil Bool)).
+    # ! Cons Bool True (Cons Bool False (Nil Bool))
+    #   : List Bool.
 
 When this program is loaded, Eightfold checks that all
 declarations are correct, and prints them out.
@@ -217,7 +233,6 @@ Under the proof assistant interpretation, this declares
 axioms and inference rules in the system.
 For example:
 
-    
     # Declare a datatype for representing strings of bits.
     # For example "1(0(1(1 Empty)))" is a term of type
     # "Bits" representing the binary string "1011".
@@ -226,6 +241,9 @@ For example:
     Empty : Bits.
     0     : > Bits Bits.
     1     : > Bits Bits.
+
+    ? 0(1(0(1 Empty))).
+    # ! 0(1(0(1 Empty))) : Bits.
 
     # Declare a predicate for representing the statement
     # that a given string of bits ends in zero.
@@ -241,6 +259,9 @@ For example:
 
     Ends_in_0 : > Bits *.
 
+    ? Ends_in_0 (0(1 Empty)).
+    # ! Ends_in_0 (0(1 Empty)) : *.
+
     # The following definitions represent a formal system
     # with one axiom and two rules.
     #
@@ -255,4 +276,56 @@ For example:
     Axiom: Ends_in_0 (0 Empty).
     Rule0: :w Bits. > (Ends_in_0 w) (Ends_in_0 (0 w)).
     Rule1: :w Bits. > (Ends_in_0 w) (Ends_in_0 (1 w)).
+
+    ? Rule1 (0(0 Empty)) (Rule0 (0 Empty) Axiom).
+    # ! Rule1 (0(0 Empty)) (Rule0 (0 Empty) Axiom)
+    #   : Ends_in_0 (1(0(0 Empty))).
+
+#### Type/value declarations
+
+Type/value declarations are of the form `[var] : [term1] = [term2]`,
+where `[term1]` represents a type and `[term2]` represents a value.
+
+Interpreted as a program, this fact defines a new binding, which
+checks that `[term2]` has type `[term1]` in the current environment,
+and binds `var` to `term2`.
+
+For instance, the usual way of encoding booleans in the
+lambda-calculus can be typechecked in Eightfold:
+
+    # Define Bool as the type ":a*.>a>aa", i.e. the function that 
+    # takes a type "a", two terms of type "a" and returns the type
+    # "a".
+    # 
+    Bool : :a*.>a>a* = :a*.>a>aa.
+
+    # Define True as the term of type Bool that takes
+    # a type "a", two terms of type "a" and returns the
+    # first one.
+    True : Bool = :a*,xa,ya.x.
+
+    # Similarly, define False as the term of type Bool
+    # that takes a type "a", two terms of type "a" and
+    # returns the second one.
+    False : Bool = :a*,xa,ya.y.
+
+    ? True.
+    # ! True : Bool.
+
+    # Define If as a term that takes a type "a", a boolean
+    # and two terms of type "a", returning the first one in
+    # case the boolean is True, and the second one otherwise.
+    If : :a*.>Bool>a>aa
+       = :a*,bBool,xa,ya.baxy.
+
+    # Declare a type S with two constants A and B for testing.
+    S : *.
+    A : S.
+    B : S.
+
+    ?? If S True A B.
+    # !! If S True A B : S = A.
+
+    ?? If S False A B.
+    # !! If S False A B : S = B.
 

@@ -6,6 +6,9 @@ Bool : *.
 True : Bool.
 False : Bool.
 
+? True.
+# ! True : Bool.
+
 # Declare "List" as type constructor,
 # so that "List Bool" is a type.
 List : >**.
@@ -15,10 +18,15 @@ List : >**.
 # For instance "Nil Bool" denotes the empty list of booleans.
 Nil : :a*.List a.
 
+? Nil Bool.
+# ! Nil Bool : List Bool.
+
 # Declare "Cons" as a function that given a type "a", an
 # element of type "a", and a list of "a" returns another
 # list of "a". For instance "Cons Bool True (Nil Bool)"
 # denotes the singleton list `[True]`.
 Cons : :a*.>a>(List a)(List a).
 
-
+? Cons Bool True (Cons Bool False (Nil Bool)).
+# ! Cons Bool True (Cons Bool False (Nil Bool))
+#   : List Bool.
