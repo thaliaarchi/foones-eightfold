@@ -319,13 +319,43 @@ lambda-calculus can be typechecked in Eightfold:
        = :a*,bBool,xa,ya.baxy.
 
     # Declare a type S with two constants A and B for testing.
-    S : *.
-    A : S.
-    B : S.
+    S : *. A : S. B : S.
 
     ?? If S True A B.
     # !! If S True A B : S = A.
 
     ?? If S False A B.
     # !! If S False A B : S = B.
+
+With the proof assistant interpretation, a type/value declaration
+is an assertion of a theorem, along with a term that encodes
+its proof in the system. For instance, the example that defines
+the `Ends_in_0` predicate above can be completed with a proof
+that the string "010" ends in zero:
+
+    # ... previous declarations
+
+	Theorem_010_ends_in_0
+	  : Ends_in_0 (0(1(0 Empty)))
+	  = Rule0 (1(0 Empty)) (Rule1 (0 Empty) Axiom).
+
+The program is loaded with no errors, which means the given
+term effectively has type `Ends_in_0 (0(1(0 Empty)))`,
+i.e. it encodes a derivation for the given proposition.
+
+#### Value declarations
+
+Value declarations are of the form `[var] = [term]`.
+This is just a convenience to abbreviate type/value declarations,
+since the type of the term can be inferred. For example, instead
+of writing:
+
+    Bool : :a*.>a>a* = :a*.>a>aa.
+
+one can write:
+
+    Bool = :a*.>a>aa.
+
+    ? Bool.
+    # ! Bool : :a*>a>a*.
 
