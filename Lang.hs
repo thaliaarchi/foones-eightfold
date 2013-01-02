@@ -98,7 +98,7 @@ freeVars (Lam x typ a) = freeVars typ `union` (freeVars a \\ [x])
 
 freshId :: Id -> [Term] -> Id
 freshId x as = head . dropWhile (`elem` vs) . map (x ++) $ suffixes
-    where suffixes = [""] ++ map (("_" ++) . show) [1..]
+    where suffixes = [""] ++ map show [1..]
           vs       = freeVars =<< as
 
 substitute :: Term -> Id -> Term -> Term
@@ -112,22 +112,32 @@ substitute (Lam x typ a) y s
     where z = freshId x [s]
           sub t = substitute (substitute t x (Var z)) y s
 
-alphaEqual :: Term -> Term -> Bool
-alphaEqual (Var x)     (Var y)     = x == y
-alphaEqual (App a1 b1) (App a2 b2) = alphaEqual a1 a2 && alphaEqual b1 b2
-alphaEqual (Lam x s a) (Lam y t b) = alphaEqual s t && alphaEqual a' b'
+renameBindings :: Env -> (Id, Term, Term) -> (Id, Term, Term) -> (Term, Term)
+renameBindings env (x, s, a) (y, t, b) = (a', b')
   where a' = substitute a x z
         b' = substitute b y z
-        z  = Var $ freshId x [a, b, s, t]
-alphaEqual _ _                     = False
+        z  = Var $ freshId x ([a, b, s, t] ++ envTerms env)
+
+renameAbstraction :: Env -> (Id, Term, Term) -> (Id, Term, Term)
+renameAbstraction env (x, s, a) = (x', s, a')
+  where a' = substitute a x (Var x')
+        x' = freshId x ([s, a] ++ envTerms env)
+
+alphaEqualInEnv :: Env -> Term -> Term -> Bool
+alphaEqualInEnv env (Var x)     (Var y)     = x == y
+alphaEqualInEnv env (App a1 b1) (App a2 b2) = alphaEqualInEnv env a1 a2 && alphaEqualInEnv env b1 b2
+alphaEqualInEnv env (Lam x s a) (Lam y t b) = alphaEqualInEnv env s t && alphaEqualInEnv env a' b'
+  where (a', b') = renameBindings env (x, s, a) (y, t, b)
+alphaEqualInEnv _ _ _                       = False
 
 ---- Reduction
 
 reduceInEnv1 :: Env -> Term -> Maybe Term
 reduceInEnv1 env (Var x)               = lookupEnvValue x env
-reduceInEnv1 env (Lam x typ body)      = return . Lam x typ =<< reduceInEnv1 env body
+reduceInEnv1 env (Lam x typ body)      = return . Lam x' typ' =<< reduceInEnv1 env body'
+  where (x', typ', body') = renameAbstraction env (x, typ, body)
 reduceInEnv1 env (App (Lam x typ a) b) = return (substitute a x b)
-reduceInEnv1 env (App a b)             = return . lApp =<< applyJust (reduceInEnv1 env)[a, b]
+reduceInEnv1 env (App a b)             = return . lApp =<< applyJust (reduceInEnv1 env) [a, b]
   where lApp [x, y] = App x y
 
 reduceInEnv :: Env -> Term -> Term
@@ -135,26 +145,24 @@ reduceInEnv env = fromJust . last . takeWhile p . iterate (>>= reduceInEnv1 env)
   where p = maybe False (const True)
 
 --betaEqualInEnv :: Env -> Term -> Term -> Bool
---betaEqualInEnv env term1 term2 = alphaEqual n1 n2
+--betaEqualInEnv env term1 term2 = alphaEqualInEnv env n1 n2
 --  where n1 = reduceInEnv env term1
 --        n2 = reduceInEnv env term2
 
 -- Leq comparisons return True if term1 is *more generic* than term2
-alphaStarLeq :: Term -> Term -> Bool
-alphaStarLeq (Var "*") b = isStarClosure b
+alphaStarLeqInEnv :: Env -> Term -> Term -> Bool
+alphaStarLeqInEnv env (Var "*") b = isStarClosure b
   where isStarClosure (Var "*")   = True
         isStarClosure (Var _)     = False
         isStarClosure (App _ _)   = False
         isStarClosure (Lam _ _ b) = isStarClosure b
-alphaStarLeq (App a1 b1) (App a2 b2) = alphaEqual a1 a2 && alphaEqual b1 b2
-alphaStarLeq (Lam x s a) (Lam y t b) = alphaEqual s t && alphaStarLeq a' b'
-  where a' = substitute a x z
-        b' = substitute b y z
-        z  = Var $ freshId x [a, b, s, t]
-alphaStarLeq _ _                     = False
+alphaStarLeqInEnv env (App a1 b1) (App a2 b2) = alphaEqualInEnv env a1 a2 && alphaEqualInEnv env b1 b2
+alphaStarLeqInEnv env (Lam x s a) (Lam y t b) = alphaEqualInEnv env s t && alphaStarLeqInEnv env a' b'
+  where (a', b') = renameBindings env (x, s, a) (y, t, b)
+alphaStarLeqInEnv _ _ _                       = False
 
 betaLeqInEnv :: Env -> Term -> Term -> Bool
-betaLeqInEnv env term1 term2 = alphaEqual n1 n2 || alphaStarLeq n1 n2
+betaLeqInEnv env term1 term2 = alphaEqualInEnv env n1 n2 || alphaStarLeqInEnv env n1 n2
   where n1 = reduceInEnv env term1
         n2 = reduceInEnv env term2
 
@@ -169,6 +177,10 @@ extendEnvType x typ (Env env) = Env (EnvType x typ:env)
 extendEnvValue :: Id -> Term -> Term -> Env -> Env
 extendEnvValue x trm typ (Env env) = Env (EnvValue x trm typ:env)
 
+envVars :: EnvFact -> [(Id, Term)]
+envVars (EnvType x _)    = [(x, Var x)]
+envVars (EnvValue x _ _) = [(x, Var x)]
+
 envType :: EnvFact -> [(Id, Term)]
 envType (EnvType x s)    = [(x, s)]
 envType (EnvValue x _ s) = [(x, s)]
@@ -177,6 +189,9 @@ envValue :: EnvFact -> [(Id, Term)]
 envValue (EnvValue x v _) = [(x, v)]
 envValue _                = []
 
+collectTerms :: Env -> (EnvFact -> [(Id, Term)]) -> [Term]
+collectTerms (Env env) f = map snd (f =<< env)
+
 lookupEnvType :: Id -> Env -> Maybe Term
 lookupEnvType x (Env env) = lookup x (concatMap envType env)
 
@@ -184,8 +199,7 @@ lookupEnvValue :: Id -> Env -> Maybe Term
 lookupEnvValue x (Env env) = lookup x (concatMap envValue env)
 
 envTerms :: Env -> [Term]
-envTerms (Env env) = t envType ++ t envValue
-  where t f = map snd (f =<< env)
+envTerms env = collectTerms env =<< [envVars, envType, envValue]
 
 ----
 
