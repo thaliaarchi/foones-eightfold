@@ -18,7 +18,7 @@ to [December 2012 PLT Games](http://www.pltgames.com/competition/2012/12).
 Being a dependently typed language, types are, in principle, expressive
 enough to encode program specifications. Eightfold can also be used
 as a logical framework, i.e. a proof assistant for user-defined deductive
-systems, encoding, by means of Curry-Howard, judgements as types and
+systems, encoding, by means of Curry-Howard, propositions as types and
 derivations as programs.
 
 Example: factorial
