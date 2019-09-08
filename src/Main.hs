@@ -1,28 +1,27 @@
-#!/usr/bin/runhaskell
 module Main where
 
-import IO
-import System(getArgs)
+import System.IO
+import System.Environment(getArgs)
 
 import Lang
 import Lexer
 import Parser
 
 --
-import System.Console.Readline(readline, addHistory)
+--import System.Console.Readline(readline, addHistory)
 
 ---- if System.Console.Readline is not available
 ---- resort to poor man's version
 ----
---readline :: String -> IO (Maybe String)
---readline prompt = do
---    putStr prompt
---    hFlush stdout
---    line <- getLine
---    return $ Just line
---
---addHistory :: String -> IO ()
---addHistory _ = return ()
+readline :: String -> IO (Maybe String)
+readline prompt = do
+    putStr prompt
+    hFlush stdout
+    line <- getLine
+    return $ Just line
+
+addHistory :: String -> IO ()
+addHistory _ = return ()
 
 --
 

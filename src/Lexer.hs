@@ -1,6 +1,6 @@
 module Lexer where
 
-import Char
+import Data.Char(isUpper, isLower, isDigit)
 
 type Id = String
 
@@ -20,7 +20,7 @@ isBlank :: Char -> Bool
 isBlank x = x `elem` " \n\t\r"
 
 isSymbol :: Char -> Bool 
-isSymbol x = x `elem` "_+-*/"
+isSymbol x = x `elem` "_+-*/~"
 
 --
 isIdent :: String -> Bool

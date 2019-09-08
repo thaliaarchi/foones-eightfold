@@ -1,4 +1,3 @@
-# load lib.8f
 
 ## Propositions are terms of type Prop
 
@@ -7,8 +6,8 @@ Prop : *.
 # Basic connectives
 True : Prop.
 False : Prop.
-Imp : End2 Prop.
-Not : End Prop.
+Imp : > Prop > Prop Prop.
+Not : > Prop Prop.
 Forall : :a *. > (> a Prop) Prop.
 
 ## Derivations of a proposition p : Prop
@@ -37,7 +36,7 @@ Dneg : :p Prop. > (D (Not (Not p))) (D p).
 ##################################################
 
 ## Definition of conjunction in terms of negation and implication
-And : End2 Prop = :p Prop, q Prop. Not (Imp p (Not q)).
+And : > Prop > Prop Prop = :p Prop, q Prop. Not (Imp p (Not q)).
 
 Andi
   : :p Prop, q Prop. > (D p) > (D q) (D (And p q))
@@ -81,7 +80,7 @@ Ande2
 
 ### Definition of disjunction in terms of conjunction and negation
 
-Or : End2 Prop = :p Prop, q Prop. Not (And (Not p) (Not q)).
+Or : > Prop > Prop Prop = :p Prop, q Prop. Not (And (Not p) (Not q)).
 
 # Introduction of (p v q) from p
 Ori1
@@ -156,3 +155,50 @@ Existse
                                         Note q (D_pcq x D_px) D_nq))))
                       D_ex)).
 
+Iff
+  : :p Prop, q Prop. Prop
+  = :p Prop, q Prop. And (Imp p q) (Imp q p).
+
+### Equality
+
+Eq : :a *, x a, y a. Prop.
+
+Eq_refl  : :a *, x a.           D (Eq a x x).
+Eq_sym   : :a *, x a, y a.      > (D (Eq a x y)) (D (Eq a y x)).
+Eq_trans : :a *, x a, y a, z a. > (D (Eq a x y)) (> (D (Eq a y z)) (D (Eq a x z))).
+
+################################################################################
+
+## Set axioms
+
+Set : *.
+
+In : :x Set, y Set. Prop.
+
+# extensionality
+#   if two sets contain the same elements,
+#   they are equal
+Zf_ext
+  : D (Forall Set (:x Set.
+         Forall Set (:y Set.
+           (Imp (Forall Set (:z Set. Iff (In z x) (In z y)))
+                (Eq Set x y))))).
+
+# regularity
+#   every non-empty set x contains a set y
+#   s.t. x and y are disjoint
+Zf_reg
+  : D (Forall Set (:x Set.
+          Imp (Exists Set (:a Set. In a x))
+              (Exists Set (:y Set.
+                  And (In y x)
+                      (Not (Exists Set (:z Set.
+                               And (In z y)
+                                   (In z x)))))))).
+
+# specification
+#   (filter)
+#Zf_spec
+#  : :Phi (> Set Prop).
+#        D (Forall Set (:z Set.
+              

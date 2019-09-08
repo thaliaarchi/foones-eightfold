@@ -1,8 +1,9 @@
 module Lang(Id, Term(..), Program, Statement(..), M(..), Env, checkProgram) where
 
-import Char
-import Maybe
-import List
+import Data.Maybe
+import Data.Char
+import Data.List
+import Control.Applicative
 import Control.Monad
 
 import Lexer
@@ -67,7 +68,7 @@ joinSep sep [x]      = x
 joinSep sep (x:y:xs) = x ++ sep ++ joinSep sep (y:xs)
 
 instance Show Env where
-	show (Env env) = "{" ++ (joinSep " ; " . map show $ env) ++ "}"
+    show (Env env) = "{" ++ (joinSep " ; " . map show $ env) ++ "}"
 
 data EnvFact = EnvType Id Term
              | EnvValue Id Term Term
@@ -79,6 +80,16 @@ instance Show EnvFact where
 data M a = Error String
          | OK a
          deriving Show
+
+instance Functor M where
+    fmap _ (Error msg) = Error msg
+    fmap f (OK x)      = OK (f x)
+
+instance Applicative M where
+    pure                    = OK
+    Error msg <*> _         = Error msg
+    OK   _    <*> Error msg = Error msg
+    OK f      <*> OK x      = OK (f x)
 
 instance Monad M where
     fail   = Error
@@ -137,6 +148,11 @@ reduceInEnv1 env (Var x)               = lookupEnvValue x env
 reduceInEnv1 env (Lam x typ body)      = return . Lam x' typ' =<< reduceInEnv1 env body'
   where (x', typ', body') = renameAbstraction env (x, typ, body)
 reduceInEnv1 env (App (Lam x typ a) b) = return (substitute a x b)
+-- delta rules
+reduceInEnv1 env (App (App (App (Var "~") _) x) y)
+  | betaEqualInEnv env x y             = return (Var "True")
+  | otherwise                          = return (Var "False")
+--
 reduceInEnv1 env (App a b)             = return . lApp =<< applyJust (reduceInEnv1 env) [a, b]
   where lApp [x, y] = App x y
 
@@ -144,10 +160,10 @@ reduceInEnv :: Env -> Term -> Term
 reduceInEnv env = fromJust . last . takeWhile p . iterate (>>= reduceInEnv1 env) . return
   where p = maybe False (const True)
 
---betaEqualInEnv :: Env -> Term -> Term -> Bool
---betaEqualInEnv env term1 term2 = alphaEqual n1 n2
---  where n1 = reduceInEnv env term1
---        n2 = reduceInEnv env term2
+betaEqualInEnv :: Env -> Term -> Term -> Bool
+betaEqualInEnv env term1 term2 = alphaEqual n1 n2
+  where n1 = reduceInEnv env term1
+        n2 = reduceInEnv env term2
 
 -- Leq comparisons return True if term1 is *more generic* than term2
 alphaStarLeq :: Term -> Term -> Bool
@@ -170,6 +186,12 @@ betaLeqInEnv env term1 term2 = alphaEqual n1 n2 || alphaStarLeq n1 n2
 
 emptyEnv :: Env
 emptyEnv = Env []
+
+globalEnv :: Env
+globalEnv = foldr (uncurry extendEnvType) emptyEnv [
+                ("*", star),
+                ("~", Lam "a" (Var "*") (Lam "x" (Var "a") (Lam "y" (Var "a") (Var "Prop"))))
+            ]
 
 extendEnvType :: Id -> Term -> Env -> Env
 extendEnvType x typ (Env env) = Env (EnvType x typ:env)
@@ -269,5 +291,5 @@ checkProgramInEnv env (AskValue term:prog) = do
 
 checkProgram :: Maybe Env -> Program -> M (Env, Program)
 checkProgram mEnv = checkProgramInEnv env
-    where env = maybe (extendEnvType "*" star emptyEnv) id mEnv
+    where env = maybe globalEnv id mEnv
 
